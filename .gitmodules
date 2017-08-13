@@ -1,0 +1,6 @@
+[submodule "django-paypal"]
+	path = django-paypal
+	url = https://github.com/GamesDoneQuick/django-paypal.git
+[submodule "tracker"]
+	path = tracker
+	url = https://github.com/TipoftheHats/donation-tracker.git

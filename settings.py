@@ -48,10 +48,10 @@ USE_I18N = True
 
 gettext = lambda x: x
 LANGUAGES = (
-#	('de',gettext('German')), 
-	('en',gettext('English')), 
+#	('de',gettext('German')),
+	('en',gettext('English')),
 #	('ja',gettext('Japanese')),
-#	('nl',gettext('Dutch')), 
+#	('nl',gettext('Dutch')),
 #	('pl',gettext('Polish')),
 )
 
@@ -90,7 +90,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'webpack.django_integration.WebpackFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder', 
+#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -165,6 +165,7 @@ from tracker.ajax_lookup_channels import AJAX_LOOKUP_CHANNELS
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'tracker.auth.EmailLoginAuthBackend',
+    'social.backends.steam.SteamOpenId',
 )
 
 AUTH_PROFILE_MODULE = 'tracker.UserProfile'
