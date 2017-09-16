@@ -110,9 +110,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 )
 
 SESSION_COOKIE_NAME = 'tracker_session'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 ROOT_URLCONF = 'urls'
 
@@ -128,6 +131,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     "tracker.context_processors.booleans",
+    'social_django.context_processors.backends',
+    'social_django.context_processors.login_redirect',
 )
 
 INSTALLED_APPS = (
@@ -145,6 +150,7 @@ INSTALLED_APPS = (
     'timezone_field',
     'ajax_select',
     'mptt',
+    'social_django',
 )
 
 EMAIL_BACKEND = local.EMAIL_BACKEND
@@ -158,7 +164,7 @@ from tracker.ajax_lookup_channels import AJAX_LOOKUP_CHANNELS
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'tracker.auth.EmailLoginAuthBackend',
-    'social.backends.steam.SteamOpenId',
+    'social_core.backends.steam.SteamOpenId'
 )
 
 AUTH_PROFILE_MODULE = 'tracker.UserProfile'
@@ -222,3 +228,16 @@ CACHES = {
         'LOCATION': '/var/tmp/django_cache',
     }
 }
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'tracker.steam_social.save_uid_to_session',
+)
+
+SOCIAL_AUTH_DISCONNECT_PIPELINE = (
+    'tracker.steam_social.clear_uid',
+)
+
+if local.HAS_STEAM_API_KEY:
+    SOCIAL_AUTH_STEAM_API_KEY = local.STEAM_API_KEY
