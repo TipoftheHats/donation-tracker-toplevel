@@ -7,6 +7,7 @@ except ImportError:
 from django.core.urlresolvers import reverse
 import itertools
 import os
+import raven
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -151,6 +152,7 @@ INSTALLED_APPS = (
     'ajax_select',
     'mptt',
     'social_django',
+    'raven.contrib.django.raven_compat',
 )
 
 EMAIL_BACKEND = local.EMAIL_BACKEND
@@ -202,11 +204,19 @@ LOGGING = {
         }
     },
     'handlers': {
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler'
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler'
+        }
 #        'file': {
 #            'level': 'ERROR',
 #            'class': 'logging.FileHandler',
@@ -218,6 +228,16 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'raven': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
         },
     }
 }
@@ -241,3 +261,11 @@ SOCIAL_AUTH_DISCONNECT_PIPELINE = (
 
 if local.HAS_STEAM_API_KEY:
     SOCIAL_AUTH_STEAM_API_KEY = local.STEAM_API_KEY
+
+if local.USING_RAVEN:
+    RAVEN_CONFIG = {
+        'dsn': local.RAVEN_DSN,
+        # If you are using git, you can also automatically configure the
+        # release based on the git info.
+        'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
+    }

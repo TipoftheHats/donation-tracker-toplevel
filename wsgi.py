@@ -11,7 +11,8 @@ os.environ.setdefault("LC_ALL", "en_US.utf8")
 # file. This includes Django's development server, if the WSGI_APPLICATION
 # setting points here.
 from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+from raven.contrib.django.raven_compat.middleware.wsgi import Sentry
+application = Sentry(get_wsgi_application())
 
 logger = logging.getLogger('')
 logger.setLevel(logging.INFO)
@@ -20,4 +21,3 @@ handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
