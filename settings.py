@@ -263,9 +263,15 @@ if local.HAS_STEAM_API_KEY:
     SOCIAL_AUTH_STEAM_API_KEY = local.STEAM_API_KEY
 
 if local.USING_RAVEN:
+    # These are kept in separate variables so that they can be easily accessed
+    # by the hacky `settings_value` template tag.
+    RAVEN_RELEASE = raven.fetch_git_sha(os.path.dirname(os.pardir))
+    RAVEN_ENVIRONMENT = local.RAVEN_ENVIRONMENT
+
     RAVEN_CONFIG = {
         'dsn': local.RAVEN_DSN,
+        'environment': RAVEN_ENVIRONMENT,
         # If you are using git, you can also automatically configure the
         # release based on the git info.
-        'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
+        'release': RAVEN_RELEASE,
     }
