@@ -3,3 +3,5 @@ local.py
 .idea
 venv
 db
+src
+.direnv

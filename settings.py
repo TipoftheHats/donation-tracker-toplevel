@@ -259,6 +259,8 @@ SOCIAL_AUTH_DISCONNECT_PIPELINE = (
     'tracker.steam_social.clear_uid',
 )
 
+SOCIAL_AUTH_URL_NAMESPACE = 'tracker:social'
+
 if local.HAS_STEAM_API_KEY:
     SOCIAL_AUTH_STEAM_API_KEY = local.STEAM_API_KEY
 
