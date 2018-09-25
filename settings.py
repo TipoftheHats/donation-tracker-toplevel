@@ -271,3 +271,6 @@ if local.USING_RAVEN:
         # release based on the git info.
         'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
     }
+
+if local.USING_SCRAPTF:
+    SCRAPTF_API_KEY = local.SCRAPTF_API_KEY
