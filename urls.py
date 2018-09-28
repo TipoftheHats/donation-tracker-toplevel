@@ -7,7 +7,7 @@ from tracker.views import logout
 import ajax_select.urls
 
 urlpatterns = [
-    url(r'^tracker/', include(tracker.urls)),
+    url(r'^', include(tracker.urls)),
     url(r'^admin/lookups/', include(ajax_select.urls)),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^logout/', logout),
