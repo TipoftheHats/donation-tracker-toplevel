@@ -1,7 +1,4 @@
 local.py
 *.pyc
 .idea
-venv
-db
-src
-.direnv
+db/
