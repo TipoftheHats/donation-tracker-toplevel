@@ -23,6 +23,8 @@ DATABASES = {
   },
 }
 
+PAYPAL_TEST = True
+
 TIME_ZONE = 'America/New_York'
 
 # set this to your site's prefix, This allows handling multiple deployments from a common url base
@@ -66,4 +68,6 @@ USING_RAVEN = False
 USING_SCRAPTF = False
 # SCRAPTF_API_KEY = ''
 
-ADDITIONAL_APPS = []
+ADDITIONAL_APPS = [
+    # place additional apps here
+]
