@@ -1,92 +1,77 @@
-# Django settings for donations project.
-
-try:
-    import local
-except ImportError:
-    import example_local as local
-from django.core.urlresolvers import reverse
-import itertools
 import os
 import raven
 
+import environ
+from django.core.urlresolvers import reverse
+from django.utils.translation import gettext_lazy as _
+
+env = environ.Env()
+environ.Env.read_env()
+
 BASE_DIR = os.path.dirname(__file__)
 
-DEBUG = local.DEBUG
+DEBUG = env.bool('DEBUG', default=False)
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-ALLOWED_HOSTS = local.ALLOWED_HOSTS
+DOMAIN = env.str('DOMAIN', default='')
 
-DOMAIN = local.DOMAIN
+PAYPAL_TEST = env.bool('PAYPAL_TEST', default=True)
 
-ADMINS = local.ADMINS
+# If a database URL is set, set up the db. Else, assume development
+# and use sqlite.
+if env.str('DATABASE_URL', default=''):
+    DATABASES = {
+        'default': env.db(),
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'db/testdb',
+        },
+    }
 
-MANAGERS = ADMINS
+TIME_ZONE = env.str('TIME_ZONE', default='America/New_York')
 
-DATABASES = local.DATABASES
-
-SITE_PREFIX = local.SITE_PREFIX
-
-PAYPAL_TEST = local.PAYPAL_TEST
-
-LOGIN_URL = SITE_PREFIX + 'user/login/'
-LOGIN_REDIRECT_URL = SITE_PREFIX + 'user/index/'
-LOGOUT_REDIRECT_URL = SITE_PREFIX + 'index/'
-
-# Append slash seems to be the way to go overall
-APPEND_SLASH = True
-
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# In a Windows environment this must be set to your system time zone.
-TIME_ZONE = local.TIME_ZONE
-
-# Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
+# For the sites framework. We should get rid of this someday.
 SITE_ID = 1
 
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery.
-USE_I18N = True
-
-gettext = lambda x: x
+# Add to this list if you have added localization for more languages.
 LANGUAGES = (
-#	('de',gettext('German')),
-	('en',gettext('English')),
-#	('ja',gettext('Japanese')),
-#	('nl',gettext('Dutch')),
-#	('pl',gettext('Polish')),
+#   ('de', _('German')),
+	('en', _('English')),
+#   ('jp', _('Japanese')),
 )
 
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
+# Always use timezone-aware datetimes and localize all dates and times.
+USE_TZ = True
 USE_L10N = True
 
-# If you set this to False, Django will not use timezone-aware datetimes.
-USE_TZ = True
-
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = env.str('MEDIA_ROOT', default='')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = env.str('MEDIA_URL', default='/media/')
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = local.STATIC_ROOT
+if env.str('STATIC_ROOT', default=None):
+    STATIC_ROOT = env.path('STATIC_ROOT')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = local.STATIC_URL #'/static/'
+if env.str('STATIC_URL', default=None):
+    STATIC_URL = env.str('STATIC_URL')
 
 # Additional locations of static files
-STATICFILES_DIRS = local.STATICFILES_DIRS
+STATICFILES_DIRS = (
+    os.path.abspath('tracker/static/'),
+)
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -95,8 +80,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = local.SECRET_KEY
+SECRET_KEY = env.str('SECRET_KEY')
 
 TEMPLATES = [
     {
@@ -124,15 +108,16 @@ TEMPLATES = [
     },
 ]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-)
+]
 
 SESSION_COOKIE_NAME = 'tracker_session'
 
@@ -159,12 +144,7 @@ INSTALLED_APPS = [
     'mptt',
     'social_django',
     'raven.contrib.django.raven_compat',
-] + local.ADDITIONAL_APPS
-
-EMAIL_BACKEND = local.EMAIL_BACKEND
-
-#You will also want to add the following to your server's crontab:
-# * * * * * ($DONATIONS_LOCATION/manage.py send_queued_mail >> send_mail.log 2>&1)
+] + env.list('ADDITIONAL_APPS', default=[])
 
 # Pull in the tracker's lookup channels
 from tracker.ajax_lookup_channels import AJAX_LOOKUP_CHANNELS
@@ -177,22 +157,39 @@ AUTHENTICATION_BACKENDS = (
 
 AUTH_PROFILE_MODULE = 'tracker.UserProfile'
 
-if local.HAS_EMAIL:
-  EMAIL_HOST = local.EMAIL_HOST
-  EMAIL_PORT = local.EMAIL_PORT
-  EMAIL_HOST_USER = local.EMAIL_HOST_USER
-  EMAIL_HOST_PASSWORD = local.EMAIL_HOST_PASSWORD
-  MANDRILL_API_KEY = local.EMAIL_HOST_PASSWORD # the API key is the same as the SMTP password
-  EMAIL_FROM_USER = local.EMAIL_FROM_USER
+LOGIN_URL = 'tracker:login'
+LOGIN_REDIRECT_URL = 'tracker:user_index'
 
-if local.HAS_GIANTBOMB_API_KEY:
-  GIANTBOMB_API_KEY = local.GIANTBOMB_API_KEY
+if env.bool('HAS_EMAIL', default=False):
+  EMAIL_HOST = env.str('EMAIL_HOST')
+  EMAIL_PORT = env.str('EMAIL_PORT')
+  EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
+  EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
+  MANDRILL_API_KEY = env.str('EMAIL_HOST_PASSWORD') # the API key is the same as the SMTP password
+  EMAIL_FROM_USER = env.str('EMAIL_FROM_USER')
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
+if env.bool('HAS_GOOGLE_APP_ID', default=False):
+    GOOGLE_CLIENT_ID = env.str('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = env.str('GOOGLE_CLIENT_SECRET')
+
+if env.bool('HAS_GIANTBOMB_API_KEY', default=False):
+  GIANTBOMB_API_KEY = env.str('GIANTBOMB_API_KEY')
+
+if env.bool('HAS_FILE_STORAGE', default=False):
+    DEFAULT_FILE_STORAGE = env.str('DEFAULT_FILE_STORAGE')
+
+if env.bool('HAS_AWS_FILE_STORAGE', default=False):
+    AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME')
+    AWS_DEFAULT_ACL = env.str('AWS_DEFAULT_ACL')
+
+SWEEPSTAKES_URL = env.str('SWEEPSTAKES_URL', default='')
+PRIVACY_POLICY_URL = env.str('PRIVACY_POLICY_URL', default='')
+GOOGLE_ANALYTICS = env.tuple('GOOGLE_ANALYTICS', default=None)
+
+TRACKER_PAGINATION_LIMIT = env.int('TRACKER_PAGINATION_LIMIT', default=500)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -268,16 +265,16 @@ SOCIAL_AUTH_DISCONNECT_PIPELINE = (
 
 SOCIAL_AUTH_URL_NAMESPACE = 'tracker:social'
 
-if local.HAS_STEAM_API_KEY:
-    SOCIAL_AUTH_STEAM_API_KEY = local.STEAM_API_KEY
+if env.str('HAS_STEAM_API_KEY', default=False):
+    SOCIAL_AUTH_STEAM_API_KEY = env.str('STEAM_API_KEY')
 
-if local.USING_RAVEN:
+if env.bool('USING_RAVEN', default=False):
     RAVEN_CONFIG = {
-        'dsn': local.RAVEN_DSN,
+        'dsn': env.str('RAVEN_DSN'),
         # If you are using git, you can also automatically configure the
         # release based on the git info.
         'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
     }
 
-if local.USING_SCRAPTF:
-    SCRAPTF_API_KEY = local.SCRAPTF_API_KEY
+if env.bool('USING_SCRAPTF', default=False):
+    SCRAPTF_API_KEY = env.str('SCRAPTF_API_KEY')
